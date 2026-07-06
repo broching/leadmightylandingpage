@@ -8,7 +8,7 @@ import { PrismMark, Wordmark } from "./prism-mark";
 const LINKS = [
   { name: "Platform", href: "/#platform" },
   { name: "Products", href: "/#products" },
-  { name: "LeadMightyHR", href: "/leadmightyhr" },
+  { name: "LeadMightyHR", href: "https://hr.leadmighty.com" },
   { name: "Contact", href: "/#contact" },
 ];
 
