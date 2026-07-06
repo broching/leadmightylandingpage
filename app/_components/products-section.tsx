@@ -109,7 +109,7 @@ function ProductPlate({ p, i }: { p: Product; i: number }) {
         <div className="mt-4 flex-1" />
         {live ? (
           <Link
-            href="/leadmightyhr"
+            href="https://hr.leadmighty.com"
             className="inline-flex items-center gap-1.5 text-sm font-semibold"
             style={{ color: p.hue }}
           >

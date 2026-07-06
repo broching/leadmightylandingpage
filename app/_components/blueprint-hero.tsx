@@ -67,7 +67,7 @@ export function BlueprintHero() {
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href="/leadmightyhr" className="lm-btn lm-btn-primary">
+          <Link href="https://hr.leadmighty.com" className="lm-btn lm-btn-primary">
             Tour LeadMightyHR <ArrowRight className="h-4 w-4" />
           </Link>
           <a href="#products" className="lm-btn lm-btn-ghost">

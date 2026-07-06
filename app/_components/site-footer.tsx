@@ -24,7 +24,7 @@ export function SiteFooter() {
               {PRODUCTS.map((p) => (
                 <li key={p.code}>
                   <a
-                    href={p.status === "live" ? "/leadmightyhr" : "/#contact"}
+                    href={p.status === "live" ? "https://hr.leadmighty.com" : "/#contact"}
                     className="flex items-center gap-2 text-sm transition-colors"
                     style={{ color: "var(--lm-muted)" }}
                   >
