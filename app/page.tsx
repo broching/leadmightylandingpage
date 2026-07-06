@@ -1,4 +1,5 @@
 import { LandingNav } from "./_components/landing-nav";
+import { Band } from "./_components/band";
 import { BlueprintHero } from "./_components/blueprint-hero";
 import { LogoStrip } from "./_components/logo-strip";
 import { PlatformSection } from "./_components/platform-section";
@@ -12,13 +13,33 @@ export default function LandingPage() {
   return (
     <main>
       <LandingNav />
-      <BlueprintHero />
-      <LogoStrip />
-      <PlatformSection />
-      <ProductsSection />
-      <TeamNote />
-      <PrinciplesSection />
-      <ContactSection />
+
+      {/* Each band shifts shade + texture, so the page reads as a set of drawings. */}
+      <Band variant="grid">
+        <BlueprintHero />
+        <LogoStrip />
+      </Band>
+
+      <Band variant="dots">
+        <PlatformSection />
+      </Band>
+
+      <Band variant="grid">
+        <ProductsSection />
+      </Band>
+
+      <Band variant="dots">
+        <TeamNote />
+      </Band>
+
+      <Band variant="grid">
+        <PrinciplesSection />
+      </Band>
+
+      <Band variant="dots">
+        <ContactSection />
+      </Band>
+
       <SiteFooter />
     </main>
   );

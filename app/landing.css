@@ -56,7 +56,10 @@
   --lm-hand: var(--font-hand), "Caveat", cursive;
 
   position: relative;
-  background: var(--lm-paper);
+  /* Base sheet — the deepest paper shade, so the footer (which sits outside a
+     band) blends with the contact band above it. The lighter bands paint over
+     this as you scroll up. */
+  background: #dde6f5;
   color: var(--lm-ink);
   font-family: var(--font-sans), system-ui, sans-serif;
   letter-spacing: -0.011em;
@@ -65,41 +68,58 @@
 }
 /* NOTE: deliberately no `overflow: clip/hidden` on .lm-root or a fixed-nav
    ancestor — that establishes a fixed-positioning containing block and would
-   trap the fixed nav + ambient background when the page scrolls. Sideways
-   overflow is instead avoided per-component. */
+   trap the fixed nav when the page scrolls. Sideways overflow is instead
+   avoided per-component. Background is no longer fixed/full-page — each .lm-band
+   owns its own shade and texture (see below). */
 
-/* Ambient paper wash — a soft blue light from the top, warm paper below. */
-.lm-root::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(70rem 42rem at 82% -12%, color-mix(in oklab, var(--lm-accent) 16%, transparent), transparent 68%),
-    radial-gradient(52rem 40rem at 2% 4%, color-mix(in oklab, var(--lm-accent-2) 10%, transparent), transparent 62%),
-    linear-gradient(180deg, #ffffff 0%, var(--lm-paper) 34%, var(--lm-paper) 100%);
-  transition: background 700ms cubic-bezier(0.22, 1, 0.36, 1);
+/* ── Section bands: each is a full-bleed sheet with its own shade + texture ── */
+.lm-band {
+  position: relative;
+  isolation: isolate;
 }
-
-/* The drafting grid — a faint blue engineering grid, masked toward the top. */
-.lm-root::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.55;
-  background-image:
-    linear-gradient(to right, color-mix(in oklab, var(--lm-line-2) 70%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--lm-line-2) 70%, transparent) 1px, transparent 1px);
-  background-size: 30px 30px;
-  -webkit-mask-image: radial-gradient(120% 80% at 50% -10%, #000 0%, transparent 60%);
-  mask-image: radial-gradient(120% 80% at 50% -10%, #000 0%, transparent 60%);
-}
-.lm-root > * {
+.lm-band > * {
   position: relative;
   z-index: 1;
+}
+/* the texture plate for each band */
+.lm-band::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+/* a hairline seam where one sheet meets the next */
+.lm-band + .lm-band {
+  border-top: 1px solid color-mix(in oklab, var(--lm-line) 70%, transparent);
+}
+
+/* grid — the hero sheet: brightest, engineering crosshatch + accent light */
+.lm-band--grid {
+  background:
+    radial-gradient(64rem 40rem at 84% -14%, color-mix(in oklab, var(--lm-accent) 15%, transparent), transparent 66%),
+    radial-gradient(48rem 38rem at -4% 2%, color-mix(in oklab, var(--lm-accent-2) 9%, transparent), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, #eef3fb 46%, #e9f0fa 100%);
+}
+.lm-band--grid::before {
+  opacity: 0.5;
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--lm-line-2) 68%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--lm-line-2) 68%, transparent) 1px, transparent 1px);
+  background-size: 30px 30px;
+  -webkit-mask-image: radial-gradient(130% 90% at 50% -8%, #000 0%, transparent 62%);
+  mask-image: radial-gradient(130% 90% at 50% -8%, #000 0%, transparent 62%);
+}
+
+/* dots — a calmer sheet: deeper paper, a fine dot lattice */
+.lm-band--dots {
+  background: linear-gradient(180deg, #e9eff8, #e6ecf6);
+}
+.lm-band--dots::before {
+  opacity: 0.7;
+  background-image: radial-gradient(color-mix(in oklab, var(--lm-line-2) 82%, transparent) 1.3px, transparent 1.4px);
+  background-size: 22px 22px;
+  background-position: 0 0;
 }
 
 /* ── Type roles ───────────────────────────────────────────── */
@@ -223,20 +243,6 @@
 }
 
 /* ── Motion ───────────────────────────────────────────── */
-/* Blueprint self-drawing: paths use pathLength="1", start hidden, draw to 0. */
-@keyframes lm-draw {
-  from { stroke-dashoffset: 1; }
-  to { stroke-dashoffset: 0; }
-}
-/* Energy flowing along an active connector. */
-@keyframes lm-beam-flow {
-  to { stroke-dashoffset: -220; }
-}
-/* Gentle idle bob for a highlighted node. */
-@keyframes lm-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
 @keyframes lm-marquee {
   to { transform: translateX(-50%); }
 }
@@ -270,17 +276,596 @@
   animation: lm-marquee 34s linear infinite;
 }
 
-/* Self-drawing strokes: applied to blueprint paths. Normalised via pathLength. */
-.lm-ink-draw {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: lm-draw 1.1s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+/* Dwell progress on the active showcase tab / carousel auto-advance. */
+@keyframes lm-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+/* A little runner in the hero hint, echoing the auto-advance. */
+@keyframes lm-hint-run {
+  0% { transform: translateX(-130%); }
+  100% { transform: translateX(340%); }
+}
+
+/* ═══ Hero ══════════════════════════════════════════════════════════ */
+
+.lm-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--lm-line-2);
+  background: color-mix(in oklab, var(--lm-panel) 82%, transparent);
+  box-shadow: var(--lm-shadow);
+  backdrop-filter: blur(6px);
+}
+.lm-hero-eyebrow-dot {
+  position: relative;
+  display: inline-flex;
+  width: 0.5rem;
+  height: 0.5rem;
+}
+.lm-hero-eyebrow-dot > span {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--lm-accent);
+}
+.lm-hero-eyebrow-dot > span:first-child {
+  animation: lm-ping 2.4s ease-out infinite;
+}
+
+/* ── The self-advancing product rail ─────────────────────────────── */
+.lm-rail-wrap { position: relative; }
+
+.lm-rail-frame {
+  border: 1px solid var(--lm-line-2);
+  border-radius: 1.15rem;
+  background: color-mix(in oklab, var(--lm-panel) 90%, transparent);
+  box-shadow: var(--lm-shadow-lg);
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
+.lm-rail-frame-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--lm-line);
+  background: var(--lm-panel-2);
+}
+.lm-rail-frame-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--lm-ink-2);
+}
+.lm-rail-frame-meta {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--lm-muted-2);
+}
+
+/* ── Product tabs ─────────────────────────────────────────── */
+.lm-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.7rem 0.7rem 0;
+}
+.lm-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 0.4rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--lm-line);
+  background: var(--lm-panel);
+  color: var(--lm-muted);
+  cursor: pointer;
+  transition: color 280ms ease, border-color 280ms ease, background 280ms ease;
+}
+.lm-tab-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--lm-line-2);
+  transition: background 280ms ease;
+}
+.lm-tab[data-active="true"] {
+  color: var(--h);
+  border-color: color-mix(in oklab, var(--h) 45%, var(--lm-line));
+  background: color-mix(in oklab, var(--h) 10%, var(--lm-panel));
+}
+.lm-tab[data-active="true"] .lm-tab-dot {
+  background: var(--h);
+}
+
+.lm-tabs-progress {
+  margin: 0.55rem 0.7rem 0;
+  height: 2px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--lm-line) 70%, transparent);
+}
+.lm-tabs-progress-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--h), var(--h2));
+  animation-name: lm-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+/* ── Product showcase stage: one big card per product, cross-fading ─────── */
+.lm-stage {
+  position: relative;
+  margin: 0.9rem 0.85rem 1rem;
+  min-height: 21.5rem;
+}
+.lm-stage-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 380ms cubic-bezier(0.22, 1, 0.36, 1), transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lm-stage-panel[data-active="true"] {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+.lm-stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.lm-stage-name {
+  font-size: 1.3rem;
+}
+.lm-stage-status {
+  flex: none;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  color: var(--lm-muted);
+  background: color-mix(in oklab, var(--lm-line) 45%, transparent);
+}
+.lm-stage-status[data-live="true"] {
+  color: #fff;
+  background: var(--h);
+}
+.lm-stage-kicker {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--lm-muted);
+}
+.lm-stage-cta {
+  margin-top: auto;
+}
+.lm-stage-cta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ── Mini product mockups: faithful, tiny recreations of each product's UI ── */
+.lm-mock-frame {
+  font-size: 0.76rem;
+  border-radius: 0.9em;
+  border: 1px solid var(--lm-line);
+  background: var(--lm-panel-2);
+  padding: 0.9em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+.lm-mock-frame--lg {
+  font-size: 0.92rem;
+}
+.lm-mock-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lm-mock-toolbar-title {
+  font-weight: 600;
+  font-size: 0.95em;
+  color: var(--lm-ink);
+}
+.lm-mock-toolbar-chip {
+  font-size: 0.72em;
+  padding: 0.15em 0.6em;
+  border-radius: 999px;
+  background: var(--lm-panel);
+  border: 1px solid var(--lm-line);
+  color: var(--lm-muted);
+}
+.lm-mock-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+.lm-mock-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.5em 0.6em;
+  border-radius: 0.7em;
+  background: var(--lm-panel);
+  border: 1px solid var(--lm-line);
+}
+.lm-mock-avatar {
+  flex: none;
+  width: 1.9em;
+  height: 1.9em;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.7em;
+  font-weight: 700;
+  color: #fff;
+}
+.lm-mock-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lm-mock-row-name {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--lm-ink);
+}
+.lm-mock-row-sub {
+  font-size: 0.72em;
+  color: var(--lm-muted);
+}
+.lm-mock-pill {
+  flex: none;
+  font-size: 0.68em;
+  padding: 0.25em 0.6em;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.lm-mock-pill--approved {
+  color: #0ea56f;
+  background: color-mix(in oklab, #0ea56f 14%, transparent);
+}
+.lm-mock-pill--pending {
+  color: #b8860b;
+  background: color-mix(in oklab, #b8860b 14%, transparent);
+}
+.lm-mock-kanban {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6em;
+}
+.lm-mock-kcol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+.lm-mock-kcol-label {
+  font-size: 0.7em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lm-muted);
+}
+.lm-mock-kcard {
+  padding: 0.55em 0.6em;
+  border-radius: 0.6em;
+  background: var(--lm-panel);
+  border: 1px solid var(--lm-line);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+.lm-mock-kcard-name {
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--lm-ink);
+}
+.lm-mock-kcard-amt {
+  font-size: 0.74em;
+  font-weight: 700;
+}
+.lm-mock-ledger {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--lm-line);
+  border-radius: 0.7em;
+  overflow: hidden;
+}
+.lm-mock-ledger-head,
+.lm-mock-ledger-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.4fr 0.9fr 0.9fr;
+  gap: 0.4em;
+  padding: 0.5em 0.65em;
+  align-items: center;
+}
+.lm-mock-ledger-head {
+  font-size: 0.68em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--lm-muted);
+  background: var(--lm-panel);
+  border-bottom: 1px solid var(--lm-line);
+}
+.lm-mock-ledger-row {
+  font-size: 0.78em;
+  color: var(--lm-ink-2);
+  background: var(--lm-panel);
+  border-bottom: 1px solid var(--lm-line);
+}
+.lm-mock-ledger-row:last-child {
+  border-bottom: none;
+}
+.lm-mock-inbox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45em;
+}
+.lm-mock-inbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.55em 0.6em;
+  border-radius: 0.7em;
+  background: var(--lm-panel);
+  border: 1px solid var(--lm-line);
+}
+.lm-mock-inbox-dot {
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 999px;
+}
+.lm-mock-inbox-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.lm-mock-inbox-subj {
+  font-size: 0.83em;
+  font-weight: 600;
+  color: var(--lm-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lm-mock-inbox-from {
+  font-size: 0.7em;
+  color: var(--lm-muted);
+}
+
+/* ── Products carousel ────────────────────────────────────── */
+.lm-carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+}
+.lm-carousel-viewport {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 1.4rem;
+}
+.lm-carousel-track {
+  display: flex;
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lm-carousel-card {
+  flex: 0 0 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 2rem 2.2rem 2.4rem;
+  background: var(--lm-panel);
+  border: 1px solid color-mix(in oklab, var(--h) 30%, var(--lm-line));
+  box-shadow: var(--lm-shadow-lg);
+}
+.lm-carousel-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lm-carousel-card-code {
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  color: var(--h);
+}
+.lm-carousel-card-status {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  color: var(--lm-muted);
+  background: color-mix(in oklab, var(--lm-line) 45%, transparent);
+}
+.lm-carousel-card-status[data-live="true"] {
+  color: #fff;
+  background: var(--h);
+}
+.lm-carousel-card-name {
+  font-size: 1.7rem;
+  margin-top: 0.2rem;
+}
+.lm-carousel-card-blurb {
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: var(--lm-muted);
+  max-width: 46ch;
+}
+.lm-carousel-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.lm-chip {
+  font-size: 11px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: var(--lm-ink-2);
+  background: color-mix(in oklab, var(--h) 8%, var(--lm-panel-2));
+  border: 1px solid color-mix(in oklab, var(--h) 22%, var(--lm-line));
+}
+.lm-carousel-card-cta {
+  margin-top: 0.3rem;
+}
+.lm-carousel-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.lm-carousel-arrow {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--lm-line-2);
+  background: var(--lm-panel);
+  color: var(--lm-ink-2);
+  box-shadow: var(--lm-shadow);
+  cursor: pointer;
+  transition: color 220ms ease, border-color 220ms ease, transform 220ms ease;
+}
+.lm-carousel-arrow:hover {
+  color: var(--lm-accent);
+  border-color: color-mix(in oklab, var(--lm-accent) 45%, var(--lm-line-2));
+  transform: translateY(-2px);
+}
+.lm-carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.4rem;
+}
+.lm-carousel-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--lm-line-2);
+  cursor: pointer;
+  transition: background 260ms ease, width 260ms ease;
+}
+.lm-carousel-dot[data-active="true"] {
+  background: var(--h);
+  width: 1.5rem;
+}
+
+/* ── "Why LeadMighty" independence diagram ───────────────────────────── */
+.lm-silo {
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  background: color-mix(in oklab, var(--h) 6%, var(--lm-panel));
+  border: 1px solid color-mix(in oklab, var(--h) 26%, var(--lm-line));
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.lm-silo-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lm-silo-code {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--h);
+}
+.lm-silo-badge {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lm-muted);
+}
+.lm-silo-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.lm-silo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  color: var(--lm-ink-2);
+}
+.lm-silo-row svg {
+  color: var(--h);
+  flex: none;
+}
+.lm-silo-caption {
+  margin: 1.4rem 0;
+  text-align: center;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lm-muted);
+}
+
+.lm-rail-hint {
+  margin-top: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  font-size: 0.78rem;
+  color: var(--lm-muted);
+}
+.lm-rail-hint-run {
+  position: relative;
+  width: 1.9rem;
+  height: 2px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--lm-line-2) 80%, transparent);
+}
+.lm-rail-hint-run::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 42%;
+  border-radius: 2px;
+  background: var(--lm-accent);
+  animation: lm-hint-run 2.4s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .lm-root *,
-  .lm-marquee-track,
-  .lm-ink-draw {
+  .lm-marquee-track {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     animation-delay: 0ms !important;
@@ -289,8 +874,5 @@
   .lm-reveal {
     opacity: 1;
     transform: none;
-  }
-  .lm-ink-draw {
-    stroke-dashoffset: 0;
   }
 }

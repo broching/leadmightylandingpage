@@ -4,9 +4,10 @@ import React from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { PrismMark, Wordmark } from "./prism-mark";
+import Image from "next/image";
 
 const LINKS = [
-  { name: "Platform", href: "/#platform" },
+  { name: "Why LeadMighty", href: "/#platform" },
   { name: "Products", href: "/#products" },
   { name: "LeadMightyHR", href: "https://hr.leadmighty.com" },
   { name: "Contact", href: "/#contact" },
@@ -37,7 +38,14 @@ export function LandingNav() {
         }}
       >
         <Link href="/" aria-label="LeadMighty home" className="flex items-center gap-2">
-          <PrismMark className="h-7 w-7" />
+          <Image
+            src="/LeadMightylogo.png"
+            alt="LeadMighty Logo"
+            width={56}
+            height={56}
+            className="h-13 w-13"
+            priority
+          />
           <Wordmark />
         </Link>
 
@@ -60,7 +68,7 @@ export function LandingNav() {
         <div className="flex items-center gap-2.5">
           <div className="hidden md:block">
             <Link href="/#contact" className="lm-btn lm-btn-primary !px-4 !py-2 text-sm">
-              Get started
+              Contact Us
             </Link>
           </div>
 
